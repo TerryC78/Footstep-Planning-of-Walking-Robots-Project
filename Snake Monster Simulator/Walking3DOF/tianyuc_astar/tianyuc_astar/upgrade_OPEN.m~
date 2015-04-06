@@ -1,0 +1,12 @@
+function [OPEN] = upgrade_OPEN(OPEN, OPEN_candidate)
+%UNTITLED2 Summary of this function goes here
+%   Detailed explanation goes here
+    []
+    % first search if there are same rows in OPEN and OPEN_candidate
+    % true, then compare cost value
+        % bigger update OPEN
+        % otherwise do nothing
+    % false, then add it into OPEN
+
+end
+

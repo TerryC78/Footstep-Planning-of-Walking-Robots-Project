@@ -1,0 +1,7 @@
+function [ new_array ] = insert_OPEN(InList, NewX, s_y, rob_mat(1), rob_mat(2), s_hn, s_gn, s_fn)
+%UNTITLED Summary of this function goes here
+%   Detailed explanation goes here
+
+
+end
+
