@@ -1,5 +1,7 @@
+function [ ret ] = ReadTerrain(filename, Show)
+
 % generate terrain from terrain height mape all; clear all
-A = imread('Gentle.jpg','jpg'); 
+A = imread(filename); 
 % A = imread('EasyTest.png','png'); 
 B = im2double(A); % change data type
 
@@ -27,10 +29,22 @@ y = linspace(0,10,101);
 % y = linspace(0,10,c1);
 [X, Y] = meshgrid(x, y);
 
+% global WholeTerrain
+% Result = zeros(91, 91);
+% for i = 1:91
+%     Result(i, :) = WholeTerrain.y(91*(i-1)+1:91*i, 1);
+% end
+
+if Show == 1
 for i=1:1 % i = 1:3
     
     figure
     mesh(X, Y, B(:,:,i))
     axis([0 10 0 10 0 .5])
+    hold on
     
+end
+end
+ret = B(:, :, 1);
+
 end

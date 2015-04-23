@@ -1,10 +1,11 @@
+function [  ] = make_terrain(terrain, savename)
 % process terrain data to csv file
 [c1, c2] = size(terrain);
 % tmp = zeros(c1, 3*c2);
-fd = fopen('terrain_trial.xyz', 'w');
+fd = fopen(savename, 'w');
 for i = 1:c1
     for j = 1:c2
-        fprintf(fd, '%d, %d, %f\n', 0.1*i, 0.1*j, terrain(i, j));
+        fprintf(fd, '%d, %d, %f\n', 0.1*j, 0.1*i, 5*terrain(i, j));
     end
 end
 fclose(fd);
@@ -17,3 +18,5 @@ fclose(fd);
 % end
 % csvwrite('terrain_trial.csv',tmp);
 %         
+
+end

@@ -1,4 +1,4 @@
-function [ z ] = fslope(x, y, Dire, Slope);
+function [ z ] = fslope(x, y, Dire, Slope)
 %UNTITLED Summary of this function goes here
 %   Detailed explanation goes here
     switch Dire

@@ -1,22 +1,42 @@
-%% this is an astar search code written by TerryC78
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+%  High level A* planning which returns the body path of the robot
+% 
+%  Tianyu Chen
+%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
+
 % clc;
 % clear all
 % close all
-function [ rob_path_new ] = HighLevelPlan()
+function [ rob_path_new ] = HighLevelPlan(CostMap)
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
-
+if nargin < 1 % random obstacles
 % ----------------step 1-------------------
 % given (1) the target 
 %       (2) obstacle map
 %       (3) robot initial position
 % the map is 10*10
+RANDOM = 1;
 x_map   = 10;
 y_map   = 10;
 obs_num = 40;
 tar_num = 1;
 rob_num = 1;
+CostMap = 1;
 % rob_mat the current position of the robot
-[ map, obs_mat, tar_mat, rob_mat ] = init_map(x_map, y_map, obs_num, tar_num, rob_num);
+[ map, obs_mat, tar_mat, rob_mat ] = init_map(x_map, y_map, obs_num, tar_num, rob_num, RANDOM, CostMap);
+end
+
+if nargin < 2
+RANDOM = 0;
+x_map   = 10;
+y_map   = 10;
+obs_num = 0;
+tar_num = 1;
+rob_num = 1;
+% rob_mat the current position of the robot
+[ map, obs_mat, tar_mat, rob_mat ] = init_map(x_map, y_map, obs_num, tar_num, rob_num, RANDOM, CostMap);
+    
+end
 
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 % ----------------step 2------------------

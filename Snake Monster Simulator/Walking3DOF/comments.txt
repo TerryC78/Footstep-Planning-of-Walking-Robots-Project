@@ -27,3 +27,10 @@ low level planning
 (2) search , constraints
 
 (3) generate trajectory
+
+
+good rough terrain visualization
+have a cost map (10 by 10 and 100 by 100)
+search and plan for the six legs
+send the footstep to the robot and generate trajectory
+

@@ -5,7 +5,7 @@
 
 clc
 close all
-clear all
+% clear all
 
 %% 1) Hexapod Parameters
 % input SM params
@@ -59,8 +59,21 @@ Worldx = 10;        %[m]
 Worldy = 10;        %[m]
 
 % terrain
-load('terrain');
+% EasyTest.png terrain height map
+load('terrain');  % a random terrain
 dist2 = terrain;
+terrain = ReadTerrain('EasyTest.png', 0);
+terrain = 5.*terrain;
+make_terrain(terrain, 'EasyTest.xyz');
+
+% Desk figure from Angel
+load('desk.mat');
+terrain = tmp - 0.11;
+desk = terrain;
+dist2  = terrain;
+make_terrain(desk, 'Desk.xyz');
+terrain = 10*terrain;  % scale
+
 [terrainX, terrainY] = size(terrain);
 
 % % Ground slope 
@@ -130,8 +143,18 @@ mu_stick = 0.9; %original: .9
 
 
 %% 4) Generate Foot Trajectory
+TerrainFile = 'EasyTest.png';
+ShowTerrain = 0;
+
+% CostMapHigh: 10 by 10
+% CostMap: 100 by 100
+%[CostMapHigh, CostMap] = Train_cost_func(TerrainFile, ShowTerrain); % 100 by 100 matrix
+[CostMapHigh, CostMap] = Train_cost_func_RF(TerrainFile, ShowTerrain);
+Load
+
+
 % High level planning
-rob_path = HighLevelPlan();
+rob_path = HighLevelPlan(CostMapHigh);
 [c1, c2] = size(rob_path);
 
 % generate high level path
@@ -223,9 +246,9 @@ end
 % leg(2) = leg(7);
 
 %% RUN SIMULATOR
-figure(3)
-mesh(terrain);
-axis([0 10 0 10 0 1]);
+% figure(3)
+% mesh(terrain);
+% axis([0 10 0 10 0 1]);
 sim('hexapod_bodyrugged.slx')
 
 
