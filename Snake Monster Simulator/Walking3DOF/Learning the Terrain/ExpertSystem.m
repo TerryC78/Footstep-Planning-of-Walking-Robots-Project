@@ -12,25 +12,24 @@ function [ TrainingData ] = ExpertSystem(Classifier, TrainingData)
         figure(1)
         subplot(2,2,1);
         mesh(X, Y, TrainingData.input(:, :, i));
-        axis([-0.05 0.05 -.05 .05 -.02 .02])
         title('3D-view','Color','blue');
         view(3);
+        axis([-0.05 0.05 -.05 .05 -.025 .025])
         subplot(2,2,2);
         mesh(X, Y, TrainingData.input(:, :, i));
-        axis([-0.05 0.05 -.05 .05 -.02 .02])
         view(-90, 0);
+        axis([-0.05 0.05 -.05 .05 -.025 .025])
         title('Left View')
         subplot(2,2,3);
         mesh(X, Y, TrainingData.input(:, :, i));
-        axis([-0.05 0.05 -.05 .05 -.02 .02])
-        view(0,90)
+        view(0, 90);
+        axis([-0.05 0.05 -.05 .05 -.025 .025])
         title('Top View')
         subplot(2,2,4);
         mesh(X, Y, TrainingData.input(:, :, i));
-        axis([-0.05 0.05 -.05 .05 -.02 .02])
-        view(0,0)
-        title('Front View')
-        
+        view(0,0);
+        axis([-0.05 0.05 -.05 .05 -.025 .025])
+        title('Front View')   
 %         axis([-0.05 0.05 -.05 .05 -.05 .05])
         
         if i == 1

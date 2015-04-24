@@ -1,12 +1,13 @@
 clc
 close all
+clear all
 
 global Classifier
 global TemplateData
 global TrainingData
 global TestData
 Train = 1;
-Test = 0;
+Test = 1;
 
 if Train == 1
 %% terrain template
@@ -26,9 +27,9 @@ TemplateData.feature = FeatureValue(Classifier, TemplateData); % 51 * (Numhof tr
 % TrainingData = ExpertSystem(Classifier, TrainingData);
 
 %% input training data and the expert gives y value
-TrainingData.num = 2; % training sample number
+TrainingData.num = 50; % training sample number
 % TrainingData.input = zeros(Classifier.TerrainWidth, Classifier.TerrainWidth, TrainingData.num); % input random terrain
-TrainingData.input = InputTerrain('EasyTest.png', TrainingData.num, Classifier.TerrainWidth, Classifier.TerrainLenth, 0); % input existed terrain height map
+TrainingData.input = InputTerrain('Gentle.jpg', TrainingData.num, Classifier.TerrainWidth, Classifier.TerrainLenth, 0); % input existed terrain height map
 TrainingData.y = zeros(TrainingData.num, 1); % 1 = good, -1 = bad, 0 = unclassified
 TrainingData.feature = FeatureValue(Classifier, TrainingData); % 51 * (Numhof training data)
 TrainingData = ExpertSystem(Classifier, TrainingData);
@@ -48,13 +49,15 @@ end
 %%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%%
 if Test == 1
 %% Test Data
-TestData.num = 100; % training sample number
-% TrainingData.input = zeros(Classifier.TerrainWidth, Classifier.TerrainWidth, TrainingData.num); % input random terrain
-TestData.input = InputTerrainTest('EasyTest.png', TestData.num, Classifier.TerrainWidth, Classifier.TerrainLenth, 1); % input existed terrain height map
-TestData.y = zeros(TestData.num, 1); % 1 = good, -1 = bad, 0 = unclassified
-TestData.feature = FeatureValue(Classifier, TestData); % 51 * (Numhof training data)
+load('TestData.mat');
+TestData = TrainingData;
+% TestData.num = 50; % test example number
+% TestData.input = InputTerrainTest('EasyTest.png', TestData.num, Classifier.TerrainWidth, Classifier.TerrainLenth, 1); % input existed terrain height map
+% TestData.y = zeros(TestData.num, 1); % 1 = good, -1 = bad, 0 = unclassified
+% TestData.feature = FeatureValue(Classifier, TestData); % 51 * (Numhof training data)
 % TestData = ExpertSystem(Classifier, TestData);
-TestData.y = Classify(Classifier.W, TestData.feature);
+yTest = Classify(Classifier.W, TestData.feature);
+RTest = sum(yTest == TestData.y)/TestData.num
 end
 
 % add height and slope features in the cost function

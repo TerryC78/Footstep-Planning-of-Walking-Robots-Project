@@ -11,7 +11,7 @@ function feature = FeatureValue(Classifier, TrainingData)
 %         end
         tmp = repmat(TrainingData.input(:, :, i), 1, 1, Classifier.FeatureNum);
         feature(:, i) = exp(sum(sum((-h*(tmp - Classifier.TerrainTemplate).^2))));   % the kernel
-%         fprintf('[2] Calc Feature %1.1f%% complete \n', 100*i/TrainingData.num);
+        fprintf('[2] Calc Feature %1.1f%% complete \n', 100*i/TrainingData.num);
     end
     
 end

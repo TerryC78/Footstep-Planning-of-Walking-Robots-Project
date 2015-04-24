@@ -130,8 +130,24 @@ mu_stick = 0.9; %original: .9
 
 
 %% 4) Generate Foot Trajectory
+TerrainFile = 'EasyTest.png';
+ShowTerrain = 0;
+Train_ = 0;
+Test_ = 0;
+Classify_ = 1;
+
+% CostMapHigh: 10 by 10
+% CostMap: whole terrain map
+[CostMapHigh, CostMap] = Train_cost_func(TerrainFile, ShowTerrain, Train_, Test_, Classify_); % 100 by 100 matrix
+% save('CostMapDebug.mat','CostMap');
+% load('CostMapDebug.mat');
+
+% Low level planning 
+fprintf('[Low Level Plan] Start!\n')
+[footstep, bodypath ] = LowLevelPlan(CostMap, terrain);
+
 % High level planning
-rob_path = HighLevelPlan();
+rob_path = HighLevelPlan(CostMapHigh);
 [c1, c2] = size(rob_path);
 
 % generate high level path
@@ -223,9 +239,9 @@ end
 % leg(2) = leg(7);
 
 %% RUN SIMULATOR
-figure(3)
-mesh(terrain);
-axis([0 10 0 10 0 1]);
+% figure(3)
+% mesh(terrain);
+% axis([0 10 0 10 0 1]);
 sim('hexapod_bodyrugged.slx')
 
 
