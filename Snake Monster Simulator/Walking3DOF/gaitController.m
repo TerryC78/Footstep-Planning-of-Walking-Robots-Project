@@ -19,15 +19,7 @@ for j = 1:num
      	  xa =  [x1,x2];           xb =  [x2,x1]; % xa  0.18 -> 0.28
  	      ya =  [y1,y2];           yb =  [y2,y1]; % ya -0.05 -> 0.05 
           za =  [z1,z2];           zb =  [z2,z1]; %  
-% forward walking        
-%         xa =  [x1,x2];           xb =  [x2,x1];
-%         ya =  -[y1,y2];          yb =  [y2,y1];
-%         za =  [z1,z2];           zb =  [z2,z1];
 
-        % sidewalk: right
-%         xa = [x1,x2];           xb = [x2,x1];
-%         ya = [y1,y2];           yb = [y2,y1];
-%         za = [z2,z1];           zb = [z1,z2];
         % use IK to calculate joint angles for given trajectory
         % For tripod gait
         jointAngles(1:3,1,j) = IK([xb(j)+hexX, yb(j)+hexY, za(j)]);
@@ -41,9 +33,7 @@ for j = 1:num
       elseif (direction == 'f' || direction == 'b')
      % pair b flight phase first
         % total trajectory
-%         xa = [x1,x2];           xb = [x2,x1];
-%         ya = [y1,y2];           yb = [y2,y1];
-%         za = [z2,z1];           zb = [z1,z2];
+
         xa =  [x1,x2];           xb =  [x2,x1];
         ya =  -[y1,y2];          yb =  [y2,y1];
         za =  [z1,z2];           zb =  [z2,z1];

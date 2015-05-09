@@ -1,8 +1,13 @@
-% Run this script to load all the simulation parameters into the workspace
+% un this script to load all the simulation parameters into the workspace
 %
 % Author: Simon Kalouche
 % BioRobotics Lab
 
+
+% In Windows
+% repmat([]), 2 places
+% ground contact model: xy order, breakpoints
+% patch high level planning
 clc
 close all
 clear all
@@ -15,10 +20,10 @@ m = SMparams.leg.mass;
 m_body = SMparams.body.mass;        %[kg] body mass
 i_body = SMparams.body.inertia;     %[kg-m^2] body inertia
 
-%link lengths [m] 
+% link lengths [m] 
 l0=l(1); l1=l(2); l2=l(3); l3a=l(4);l3b=l(5);
 
-%link masses [kg]
+% link masses [kg]
 m1=m(1); m2=m(2); m3=m(3);
 
 %link inertias [kg-m^2]
@@ -55,12 +60,17 @@ kd1 = 150; kd2 = 150; kd3 = 150;
 %% 2) World Parameters
 
 % Ground Surface World Size
+global Worldx
+global Worldy
 Worldx = 10;        %[m]
 Worldy = 10;        %[m]
 
-% terrain
-load('terrain');
-dist2 = terrain;
+% Terrain
+% load('terrain');
+% dist2 = terrain;
+terrain = ReadTerrain('EasyTest.png', 0);
+
+% terrain = 5 .* terrain;
 [terrainX, terrainY] = size(terrain);
 
 % % Ground slope 
@@ -71,7 +81,7 @@ dist2 = terrain;
 amp = .02;       % [m] max amplitude or height of terrain
 freqT = 6;       % frequency of oscillations in ground terrain
 res = 10;
-load WorldData4SM.mat
+% load WorldData4SM.mat
 % for x = 10:res:Worldx*1000
 %     for y = 10:res:Worldy*1000
 %         
@@ -130,107 +140,170 @@ mu_stick = 0.9; %original: .9
 
 
 %% 4) Generate Foot Trajectory
-% High level planning
-rob_path = HighLevelPlan();
-[c1, c2] = size(rob_path);
+% -------------------- Learning the terrain --------------------------- %
+% CostMapHigh: 10 by 10
+% CostMap: whole terrain map
+TerrainFile = 'EasyTest.png';
+HighOptions.ShowTerrain = 0;
+HighOptions.Train = 0;
+HighOptions.Test = 0;
+HighOptions.ClassifyTerrain = 1;
+HighOptions.Resolution = [100; 100];
+HighOptions.LearnRegion = [6; 6; 95; 95];
 
-% generate high level path
-numStep = 5; %number of steps to take
-step_freq = 20;  %[s] time for leg to move thru trajectory for 1 step
-num = 100; % number of increments per step; must be a number divisible by 4
-joint_angles = zeros(3, 6, num*numStep*c1);
-% joint_angles = zeros(3, 6, num);
+[CostMapHigh, ~] = Train_cost_func(TerrainFile, HighOptions); % 100 by 100 matrix
+% save('CostMapDebug.mat','CostMap');
+% load('CostMapDebug.mat');
 
-for i = 1:c1  % c1 path transitions
-     joint_angle = GenerateFootTraj(rob_path(i,1), rob_path(i,2), numStep, step_freq, num);
-% for i = 1:1
-%     joint_angle = GenerateFootTraj(-0.2, 0, numStep, step_freq, num);
-    for j = 1:numStep  % repeat footstep
-        joint_angles(:, :, (((i-1)*numStep+(j-1))*num+1):((i-1)*numStep+(j))*num) = joint_angle;
+% ---------------------- High Level Planning -------------------------- %
+fprintf('[High Level Plan] Planning...\n')
+rob_path = HighLevelPlan(CostMapHigh); % High level planning
+
+% ---------------------- Low  Level Planning -------------------------- %
+fprintf('[Low Level Plan] Planning...\n')
+[c1, ~] = size(rob_path);  % need c1-1 times low level planning
+
+ResX = 2400;
+ResY = ResX;
+MovePath = diff(rob_path);  % c1-1 by 2 matrix
+LowOptions.ShowTerrain = 0;
+LowOptions.Train = 0;
+LowOptions.Test = 0;
+LowOptions.ClassifyTerrain = 1;
+LowOptions.Resolution = [ResX; ResY];
+
+TotalFootStep = zeros(3, 6, 1);
+TotalBodyPath = zeros(3, 1);
+
+i = 1;
+while i < c1  % c1 times low level planning
+    
+    fprintf('-----------%d/%d step-----------\n', i, c1-1);
+    %_3_|_2_|_1_
+    %_4_|_*_|_8_
+    % 5 | 6 | 7
+    % right go up 9 down 11
+    % up go right 10 left 12
+    LowOptions.Direction = MoveDirection(MovePath(i, :), rob_path(i,:));
+    CurX = rob_path(i, 1);
+    CurY = rob_path(i, 2);
+    
+    % find low level search area
+    d_move = round(2400/5)-11;
+    switch LowOptions.Direction
+        case {1, 2, 8} 
+            MoveX = d_move;
+            MoveY = d_move;
+            x1 = round((CurX-1)*(ResX/10)+1)+5;
+            y1 = round((CurY-1)*(ResY/10)+1)+5;      
+        case {3, 4, 9}
+            MoveX = d_move;
+            MoveY =-d_move;
+            x1 = round((CurX-1)*(ResX/10)+1)+5;
+            y1 = round((CurY  )*(ResY/10)+1)-6;
+        case {5, 11, 12}
+            MoveX =-d_move;
+            MoveY =-d_move;
+            x1 = round((CurX  )*(ResX/10)+1)-6;
+            y1 = round((CurY  )*(ResY/10)+1)-6;
+        case {6, 7, 10}
+            MoveX =-d_move;
+            MoveY = d_move;
+            x1 = round((CurX  )*(ResX/10)+1)-6;
+            y1 = round((CurY-1)*(ResY/10)+1)+5;
     end
+    x2 = x1 + MoveX;
+    y2 = y1 + MoveY;
+    [x1, y1, x2, y2] = Reorder(x1, y1, x2, y2);
+    LowOptions.LearnRegion = [x1; y1; x2; y2];
+    
+    [~, CostMap, LearnTerrain] = Train_cost_func(TerrainFile, LowOptions); 
+    
+    [ footstep, bodypath ] = LowLevelPlan(CostMap, LearnTerrain, LowOptions); % Low level planning 
+    
+    [~, ~, f3] = size(footstep);
+    [~, b2] = size(bodypath);
+    
+    % insert difference
+    if i > 1
+        insertfoot = zeros(3, 6);
+        insertfoot(:, [1 4 5]) = footstep(:, [1 4 5], 1);
+        insertfoot(:, [2 3 6]) = TotalFootStep(:, [2 3 6], end);
+        TotalFootStep(:,:,end+1) = insertfoot;
+        insertbody = (bodypath(:, 1) + TotalBodyPath(:, end))/2;
+        TotalBodyPath(:,end+1) = insertbody;
+    end
+        
+    TotalFootStep(:, :, end+1:end+f3) = footstep;
+    TotalBodyPath(:, end+1:end+b2) = bodypath;
+    
+    i = i + 1;
+    
 end
 
-% for j = 1:num
-%     % for limb(s) that are manipulating things
-%     joint_angles(:,7,j) = IK([x3(j), y3(j), z3(j)]); 
-% end
+save('TotalBodyPath.mat', 'TotalBodyPath');
+save('TotalFootStep.mat', 'TotalFootStep');
+
+% load('TotalBodyPath.mat');
+% load('TotalFootStep.mat');
+
+% plot total footstep
+[~,~,f3] = size(TotalFootStep);
+figure(10)
+x = reshape(TotalFootStep(2,1,:), f3, 1);
+y = reshape(TotalFootStep(1,1,:), f3, 1);
+plot(x(2:end), y(2:end), 'r')
+hold on
+x = reshape(TotalFootStep(2,2,:), f3, 1);
+y = reshape(TotalFootStep(1,2,:), f3, 1);
+plot(x(2:end), y(2:end), 'b')
+hold on
+x = reshape(TotalFootStep(2,3,:), f3, 1);
+y = reshape(TotalFootStep(1,3,:), f3, 1);
+plot(x(2:end), y(2:end), 'y')
+hold on
+x = reshape(TotalFootStep(2,4,:), f3, 1);
+y = reshape(TotalFootStep(1,4,:), f3, 1);
+plot(x(2:end), y(2:end), 'g')
+hold on
+x = reshape(TotalFootStep(2,5,:), f3, 1);
+y = reshape(TotalFootStep(1,5,:), f3, 1);
+plot(x(2:end), y(2:end), 'm')
+hold on
+x = reshape(TotalFootStep(2,6,:), f3, 1);
+y = reshape(TotalFootStep(1,6,:), f3, 1);
+plot(x(2:end), y(2:end), 'k')
+hold on
+legend('leg1','leg2','leg3','leg4','leg5','leg6','Location','NorthWest');
+title('Footstep path for 6 legs')
+xlabel('y direction')
+ylabel('x direction')
+axis([0 10 0 10])
+grid on
+
+% plot total bodypath
+figure(11)
+plot(TotalBodyPath(2,2:end),TotalBodyPath(1,2:end), 'k', 'LineWidth', 2)
+legend('Final Body Path','Location','NorthWest')
+title('Final Body Path from low level planner')
+xlabel('y direction')
+ylabel('x direction')
+axis([0 10 0 10])
+grid on
+
+% ------------------- Generate joint angle Traj ----------------------- %
+fprintf('[Trajectroy] Generating Traj...\n')
+[joint_angles, RelaPosition] = GenerateTraj(TotalFootStep, TotalBodyPath);
+% remove imag numbers
+idx = find(imag(joint_angles)~=0);
+joint_angles(:,:,(floor((idx-1)/18)+1)) = [];
 
 % ------------------- publish msg to the robot ------------------------ %
-for k = 1:6
-    % Repeat angles for however many number of steps the simulation is
-    % specified for            
-%     for i = 1:(numStep)
-%         hipM(:,i) = joint_angles(1,k,:);
-%         kneeM(:,i) = joint_angles(2,k,:);
-%         ankleM(:,i) = joint_angles(3,k,:);
-%     end
-%     hipM(:,1) = joint_angles(1,k,:);
-%     kneeM(:,1) = joint_angles(2,k,:);
-%     ankleM(:,1) = joint_angles(3,k,:);
-    hipV = joint_angles(1,k,:);
-    kneeV = joint_angles(2,k,:);
-    ankleV = joint_angles(3,k,:);
+fprintf('[Publish] Publishing to the robot...\n')
+[leg] = PublishMsg(joint_angles(:,:,2:end));
 
-    % merge all columns into 1 column
-%     hipV = hipM(:);
-%     kneeV = kneeM(:);
-%     ankleV = ankleM(:);
-    
-    % Leg joint position control trajectory timeseries
-    leg(k).hip.angles = timeseries(hipV);
-    leg(k).knee.angles = timeseries(kneeV);
-    leg(k).ankle.angles = timeseries(ankleV);
-    leg(k).hip.angles.time = leg(k).hip.angles.time*(step_freq/num);
-    leg(k).knee.angles.time = leg(k).knee.angles.time*(step_freq/num);
-    leg(k).ankle.angles.time = leg(k).ankle.angles.time*(step_freq/num);
-
-    % initial conditions
-    leg(k).hip.IC = joint_angles(1,k,1);
-    leg(k).knee.IC = joint_angles(2,k,1);
-    leg(k).ankle.IC = joint_angles(3,k,1);
-end
-
-%% Change Gait Type
-
-% %turn left
-% leg(2).hip.angles.Data = -leg(1).hip.angles.Data;
-% leg(4).hip.angles.Data = -leg(3).hip.angles.Data;
-% leg(6).hip.angles.Data = -leg(5).hip.angles.Data;
-
-% %turn right
-% leg(1).hip.angles.Data = -leg(2).hip.angles.Data;
-% leg(3).hip.angles.Data = -leg(4).hip.angles.Data;
-% leg(5).hip.angles.Data = -leg(6).hip.angles.Data;
-
-% % skating??
-% leg(2) = leg(1);
-% leg(3) = leg(1);
-% leg(4) = leg(1);
-% leg(5) = leg(1);
-% leg(6) = leg(1);
-
-%  Manipulating legs Gaits
-% leg(6) = leg(7);   %lift up one leg
-
-% % quadruped walking
-% leg(6) = leg(4);
-% leg(5) = leg(3);
-% leg(4) = leg(7);
-% leg(3) = leg(7);
-
-% % hind legs lifted up
-% leg(1) = leg(7);
-% leg(2) = leg(7);
-
-%% RUN SIMULATOR
-figure(3)
-mesh(terrain);
-axis([0 10 0 10 0 1]);
+% ----------------------- RUN SIMULATOR ------------------------------- %
+fprintf('[Simulation] Running Simulation...\n')
 sim('hexapod_bodyrugged.slx')
-
-
-
-
-
 
 

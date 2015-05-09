@@ -1,3 +1,12 @@
+Footstep planning code
+
+To run the code,
+- first add the four folders "Learning the Terrain, HighLevelPlan, LowLevelPlan, Trajectory Optimization" and their subfolders into path 
+- then open “hexapod_bodyrugged.slx”
+- finally run "RunSnakeMonsterSimulator.m"
+
+
+
 A* on flag ground
 (1) turn left, turn right
 
@@ -27,3 +36,18 @@ low level planning
 (2) search , constraints
 
 (3) generate trajectory
+
+
+function:
+any terrain height map => 100 by 100  matrix
+given 100 by 100 matrix => 
+first classify n both high level and lower level
+(1)  high level: body path
+(2)  low level: next 4 steps
+
+good rough terrain visualization (scale)
+have a cost map (10 by 10 and 100 by 100)
+search and plan for the six legs
+send the footstep to the robot and generate trajectory
+
+

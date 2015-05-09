@@ -8,6 +8,7 @@ direction = 'fr';
 step_d = [x_d y_d]; % 0.3
 step_h = 1; % 1
 step_w = 1; % 1
+
 % footstep planning
 [x1,x2,y1,y2,z1,z2] = footStep(step_d,step_h, step_w,num,direction,'m','m');
 %------------------------------------------- 
